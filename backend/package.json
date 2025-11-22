@@ -1,5 +1,5 @@
 {
-  "name": "apilab-worker",
+  "name": "e2b-mcp-api-worker",
   "version": "1.0.0",
   "type": "module",
   "private": true,

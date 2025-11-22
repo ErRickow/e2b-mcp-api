@@ -2,7 +2,7 @@
 
 ## Architecture
 
-APILab uses a **backend proxy architecture** to run MCP servers securely:
+E2B MCP API uses a **backend proxy architecture** to run MCP servers securely:
 
 ```
 ┌─────────────┐     ┌──────────────────┐     ┌─────────────┐

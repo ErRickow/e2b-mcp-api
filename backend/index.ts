@@ -1,5 +1,5 @@
 /**
- * Cloudflare Worker untuk APILab Backend
+ * Cloudflare Worker untuk E2B MCP API Backend
  * Handles E2B MCP sandbox creation and proxies MCP tool operations
  *
  * Available Endpoints:

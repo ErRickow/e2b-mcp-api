@@ -1,4 +1,4 @@
-name = "apilab-mcp-api"
+name = "e2b-mcp-api"
 main = "index.ts"
 compatibility_date = "2024-11-17"
 
@@ -11,6 +11,3 @@ compatibility_flags = ["nodejs_compat"]
 # Environment variables (optional - API key dari frontend)
 # [vars]
 # E2B_API_KEY = "" # Optional - bisa dari frontend request
-
-# Secrets (gunakan: wrangler secret put E2B_API_KEY)
-# Tapi untuk hackathon, API key dari frontend lebih mudah
