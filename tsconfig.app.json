@@ -19,7 +19,7 @@
     /* Path Aliases */
     "baseUrl": ".",
     "paths": {
-      "@/*": ["/frontend/*"]
+      "@/*": ["./src/*"]
     },
 
     /* Linting */
@@ -30,5 +30,5 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true
   },
-  "include": ["frontend"]
+  "include": ["src"]
 }

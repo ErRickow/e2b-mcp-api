@@ -1,5 +1,5 @@
 /**
- * Cloudflare Worker Backend
+ * Cloudflare Worker untuk APILab Backend
  * Handles E2B MCP sandbox creation and proxies MCP tool operations
  *
  * Available Endpoints:
@@ -11,10 +11,12 @@
 
 import Sandbox from 'e2b';
 
+// Type untuk environment variables
 interface Env {
-  // E2B_API_KEY can be seved in worker
+  // E2B_API_KEY bisa disimpan sebagai secret di Cloudflare Workers
 }
 
+// Helper function untuk CORS response
 function corsResponse(body: any, status = 200) {
   return new Response(JSON.stringify(body), {
     status,
@@ -27,6 +29,7 @@ function corsResponse(body: any, status = 200) {
   });
 }
 
+// In-memory cache with MCP client info (Workers KV lebih baik untuk production)
 const sandboxCache = new Map<string, {
   sandbox: any;
   mcpUrl: string;
@@ -43,6 +46,7 @@ const sandboxCache = new Map<string, {
 async function initializeMcpSession(mcpUrl: string, mcpToken: string): Promise<string> {
   console.log('🤝 Initializing MCP session...');
 
+  // Step 1: Send initialize request
   const initResponse = await fetch(mcpUrl, {
     method: 'POST',
     headers: {
@@ -74,9 +78,11 @@ async function initializeMcpSession(mcpUrl: string, mcpToken: string): Promise<s
     throw new Error(`MCP initialize failed: ${initResponse.status} - ${errorText}`);
   }
 
+  // CRITICAL: Extract Mcp-Session-Id header for subsequent requests
   const sessionId = initResponse.headers.get('Mcp-Session-Id') || '';
   console.log('   Session ID:', sessionId);
 
+  // Parse response (may be SSE or JSON)
   const contentType = initResponse.headers.get('content-type') || '';
   const responseText = await initResponse.text();
 
@@ -92,6 +98,8 @@ async function initializeMcpSession(mcpUrl: string, mcpToken: string): Promise<s
 
   console.log('   Server capabilities:', JSON.stringify(initData.result).substring(0, 200));
 
+  // Step 2: Send initialized notification (no params field for notifications!)
+  // IMPORTANT: Include session ID in notification
   const notifyResponse = await fetch(mcpUrl, {
     method: 'POST',
     headers: {
@@ -108,6 +116,8 @@ async function initializeMcpSession(mcpUrl: string, mcpToken: string): Promise<s
 
   console.log('   Initialized notification sent:', notifyResponse.status);
 
+  // Small delay to ensure server processes the notification
+  // (MCP gateway might need time to transition out of init state)
   await new Promise(resolve => setTimeout(resolve, 100));
 
   console.log('✅ MCP session initialized with ID:', sessionId);
@@ -123,18 +133,21 @@ async function createMcpSandbox(apiKey: string, mcpServers: Record<string, any>)
   console.log('📦 Creating E2B sandbox with MCP gateway...');
   console.log('🌐 MCP Servers:', Object.keys(mcpServers).join(', '));
 
+  // Official API: Use Sandbox.create() not Sandbox.betaCreate()
   const sandbox = await Sandbox.create({
     apiKey,
     mcp: mcpServers,
     timeoutMs: 600_000, // 10 minutes
   });
 
+  // Official methods: getMcpUrl() and getMcpToken() (not beta methods)
   const mcpUrl = sandbox.getMcpUrl();
   const mcpToken = await sandbox.getMcpToken();
 
   console.log('✅ Sandbox created successfully!');
   console.log('🔗 MCP URL:', mcpUrl);
 
+  // Initialize MCP session with proper handshake and get session ID
   const sessionId = await initializeMcpSession(mcpUrl, mcpToken);
 
   // Cache the sandbox with MCP info including session ID
@@ -222,6 +235,7 @@ export default {
       });
     }
 
+    // List MCP tools (using MCP JSON-RPC protocol)
     if (url.pathname.startsWith('/api/mcp/tools/') && request.method === 'GET') {
       const sandboxId = url.pathname.split('/').pop();
       const cached = sandboxCache.get(sandboxId || '');
@@ -236,6 +250,10 @@ export default {
         console.log('   Token:', cached.mcpToken.substring(0, 10) + '...');
         console.log('   Session ID:', cached.sessionId);
 
+        // Use MCP JSON-RPC protocol to list tools
+        // Based on E2B examples: client.listTools() sends tools/list JSON-RPC request
+        // IMPORTANT: MCP gateway requires Accept header with BOTH content types
+        // CRITICAL: Must include Mcp-Session-Id header from initialization
         const mcpResponse = await fetch(cached.mcpUrl, {
           method: 'POST',
           headers: {
@@ -316,6 +334,7 @@ export default {
       }
     }
 
+    // Call MCP tool (using MCP JSON-RPC protocol)
     if (url.pathname.startsWith('/api/mcp/call/') && request.method === 'POST') {
       const sandboxId = url.pathname.split('/').pop();
       const cached = sandboxCache.get(sandboxId || '');
@@ -336,6 +355,10 @@ export default {
         console.log('   Args:', JSON.stringify(args));
         console.log('   Session ID:', cached.sessionId);
 
+        // Use MCP JSON-RPC protocol to call tool
+        // Based on E2B examples: client.callTool(name, arguments) sends tools/call JSON-RPC request
+        // IMPORTANT: MCP gateway requires Accept header with BOTH content types
+        // CRITICAL: Must include Mcp-Session-Id header from initialization
         const mcpResponse = await fetch(cached.mcpUrl, {
           method: 'POST',
           headers: {
@@ -371,6 +394,7 @@ export default {
 
         let mcpData;
 
+        // Parse SSE format if needed
         if (contentType.includes('text/event-stream') || responseText.startsWith('event:')) {
           console.log('   Parsing as SSE format');
           // SSE format: "event: message\ndata: {...}\n\n"
