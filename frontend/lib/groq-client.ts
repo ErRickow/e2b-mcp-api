@@ -23,7 +23,7 @@ function getApiKeys() {
   return { neosantara: '', groq: '', e2b: '' };
 }
 
-export function createLLMProvider(provider: LLMProvider = '') {
+export function createLLMProvider(provider: LLMProvider) {
   const apiKeys = getApiKeys();
 
   if (provider === 'neosantara') {
