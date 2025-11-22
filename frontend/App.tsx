@@ -1,5 +1,5 @@
 /**
- * APILab - Minimalist Chat Interface
+ * MCP E2B - Minimalist Chat Interface
  * Inspired by modern chat UIs (ChatGPT, Claude, etc.)
  */
 
