@@ -1,0 +1,19 @@
+{
+  "name": "e2b-mcp-backend",
+  "version": "1.0.0",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy"
+  },
+  "dependencies": {
+    "e2b": "^2.7.0"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20250115.0",
+    "gh-pages": "^6.3.0",
+    "typescript": "^5.9.3",
+    "wrangler": "^3.101.0"
+  }
+}
